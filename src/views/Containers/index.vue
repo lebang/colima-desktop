@@ -142,8 +142,6 @@ const handleDelete = (row) => {
   </div>
 </template>
 
-
-
 <style scoped lang="less">
 .containers-page {
   padding: 20px;

@@ -130,8 +130,6 @@ const handleDelete = (row) => {
   </div>
 </template>
 
-
-
 <style scoped lang="less">
 .volumes-page {
   padding: 20px;

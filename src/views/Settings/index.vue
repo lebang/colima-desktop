@@ -180,8 +180,6 @@ const saveConfig = () => {
   </div>
 </template>
 
-
-
 <style scoped lang="less">
 .settings-page {
   padding: 20px;

@@ -161,8 +161,6 @@ const getDriverType = (driver) => {
   </div>
 </template>
 
-
-
 <style scoped lang="less">
 .networks-page {
   padding: 20px;

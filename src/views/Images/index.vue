@@ -144,8 +144,6 @@ const handleCreateContainer = (row) => {
   </div>
 </template>
 
-
-
 <style scoped lang="less">
 .images-page {
   padding: 20px;
