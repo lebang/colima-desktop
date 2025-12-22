@@ -1,13 +1,7 @@
 <script setup>
-import { ref, shallowRef, markRaw, computed, onMounted, onUnmounted } from 'vue'
+import { ref, shallowRef, computed, onMounted, onUnmounted, defineAsyncComponent } from 'vue'
 import { useColimaStore } from '@/stores'
 import { t, i18nScope } from '@/languages'
-import Dashboard from '@/views/Dashboard/index.vue'
-import Containers from '@/views/Containers/index.vue'
-import Images from '@/views/Images/index.vue'
-import Volumes from '@/views/Volumes/index.vue'
-import Networks from '@/views/Networks/index.vue'
-import Settings from '@/views/Settings/index.vue'
 import { AppSidebar, AppHeader } from '@/components/layout'
 
 const colimaStore = useColimaStore()
@@ -59,14 +53,14 @@ const activeMenu = ref('dashboard')
 // 侧边栏折叠状态
 const isCollapse = ref(false)
 
-// 页面组件映射
+// 页面组件映射 - 使用动态导入实现懒加载
 const pageComponents = {
-  dashboard: markRaw(Dashboard),
-  containers: markRaw(Containers),
-  images: markRaw(Images),
-  volumes: markRaw(Volumes),
-  networks: markRaw(Networks),
-  settings: markRaw(Settings)
+  dashboard: defineAsyncComponent(() => import('@/views/Dashboard/index.vue')),
+  containers: defineAsyncComponent(() => import('@/views/Containers/index.vue')),
+  images: defineAsyncComponent(() => import('@/views/Images/index.vue')),
+  volumes: defineAsyncComponent(() => import('@/views/Volumes/index.vue')),
+  networks: defineAsyncComponent(() => import('@/views/Networks/index.vue')),
+  settings: defineAsyncComponent(() => import('@/views/Settings/index.vue'))
 }
 
 // 响应式翻译函数，依赖 langTrigger 实现响应式更新
@@ -121,7 +115,7 @@ const toggleCollapse = () => {
 
       <!-- 内容区 -->
       <el-main class="app-main">
-        <component :is="currentComponent" :key="langTrigger" />
+        <component :is="currentComponent" />
       </el-main>
     </el-container>
   </el-container>

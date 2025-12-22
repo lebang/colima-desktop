@@ -1,5 +1,6 @@
 use serde::{Deserialize, Serialize};
 use std::process::Command;
+use std::path::Path;
 
 // ========== 通用命令结果结构 ==========
 
@@ -9,6 +10,35 @@ pub struct CommandOutput {
     pub stdout: String,
     pub stderr: String,
     pub code: Option<i32>,
+}
+
+// ========== 命令路径查找 ==========
+
+/// 在常见安装路径中查找命令的绝对路径
+/// macOS GUI 应用不会继承终端的 PATH，需要使用绝对路径
+fn find_command_path(cmd: &str) -> String {
+    let home = std::env::var("HOME").unwrap_or_else(|_| "/Users".to_string());
+    
+    // 常见的命令安装路径
+    let search_paths = [
+        format!("/opt/homebrew/bin/{}", cmd),           // Apple Silicon Homebrew
+        format!("/usr/local/bin/{}", cmd),              // Intel Homebrew
+        format!("/usr/bin/{}", cmd),                    // 系统路径
+        format!("/bin/{}", cmd),                        // 系统路径
+        format!("{}/.rd/bin/{}", home, cmd),            // Rancher Desktop
+        format!("{}/.docker/bin/{}", home, cmd),        // Docker Desktop
+        format!("{}/.colima/bin/{}", home, cmd),        // Colima
+        format!("{}/.local/bin/{}", home, cmd),         // 用户本地路径
+    ];
+    
+    for path in search_paths {
+        if Path::new(&path).exists() {
+            return path;
+        }
+    }
+    
+    // 如果找不到，回退到命令名（可能在开发环境中通过 PATH 找到）
+    cmd.to_string()
 }
 
 // ========== 参数构建器 ==========
@@ -57,7 +87,20 @@ impl ArgsBuilder {
 // ========== 通用命令执行函数 ==========
 
 fn run_command(cmd: &str, args: &[&str]) -> CommandOutput {
-    match Command::new(cmd).args(args).output() {
+    let cmd_path = find_command_path(cmd);
+    
+    // 设置额外的 PATH 环境变量，确保子命令也能找到依赖
+    let home = std::env::var("HOME").unwrap_or_else(|_| "/Users".to_string());
+    let extended_path = format!(
+        "/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:{}/.rd/bin:{}/.docker/bin",
+        home, home
+    );
+    
+    match Command::new(&cmd_path)
+        .args(args)
+        .env("PATH", &extended_path)
+        .output() 
+    {
         Ok(output) => CommandOutput {
             success: output.status.success(),
             stdout: String::from_utf8_lossy(&output.stdout).to_string(),
@@ -67,7 +110,7 @@ fn run_command(cmd: &str, args: &[&str]) -> CommandOutput {
         Err(e) => CommandOutput {
             success: false,
             stdout: String::new(),
-            stderr: format!("执行命令失败: {}", e),
+            stderr: format!("执行命令失败: {} (路径: {})", e, cmd_path),
             code: None,
         },
     }

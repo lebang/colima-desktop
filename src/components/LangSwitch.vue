@@ -1,5 +1,6 @@
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue'
+import { ArrowDown } from '@element-plus/icons-vue'
 import { i18nScope, change } from '@/languages'
 
 // 当前语言（响应式）
