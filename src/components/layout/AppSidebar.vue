@@ -91,13 +91,13 @@ const toggleCollapse = () => {
 
 <style scoped lang="less">
 .app-aside {
-  background-color: #fff;
+  background-color: var(--color-bg-sidebar, #fff);
   transition: width 0.3s;
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  border-right: 1px solid #e4e7ed;
-  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.05);
+  border-right: 1px solid var(--color-border, #e4e7ed);
+  box-shadow: 2px 0 8px var(--color-shadow, rgba(0, 0, 0, 0.05));
 }
 
 .logo-container {
@@ -106,7 +106,7 @@ const toggleCollapse = () => {
   align-items: center;
   justify-content: center;
   padding: 0 12px;
-  border-bottom: 1px solid #e4e7ed;
+  border-bottom: 1px solid var(--color-border, #e4e7ed);
   
   .logo-img {
     width: 28px;
@@ -117,7 +117,7 @@ const toggleCollapse = () => {
     margin-left: 8px;
     font-size: 14px;
     font-weight: 600;
-    color: #303133;
+    color: var(--color-text-primary, #303133);
     white-space: nowrap;
   }
 }
@@ -129,16 +129,16 @@ const toggleCollapse = () => {
   
   :deep(.el-menu-item),
   :deep(.el-sub-menu__title) {
-    color: #606266;
+    color: var(--color-text-regular, #606266);
     
     &:hover {
-      background-color: #ecf5ff;
+      background-color: rgba(64, 158, 255, 0.1);
       color: #409eff;
     }
   }
   
   :deep(.el-menu-item.is-active) {
-    background-color: #ecf5ff;
+    background-color: rgba(64, 158, 255, 0.15);
     color: #409eff;
     border-right: 3px solid #409eff;
   }
@@ -154,12 +154,12 @@ const toggleCollapse = () => {
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  color: #909399;
-  border-top: 1px solid #e4e7ed;
+  color: var(--color-text-secondary, #909399);
+  border-top: 1px solid var(--color-border, #e4e7ed);
   
   &:hover {
     color: #409eff;
-    background-color: #ecf5ff;
+    background-color: rgba(64, 158, 255, 0.1);
   }
 }
 </style>

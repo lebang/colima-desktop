@@ -32,7 +32,7 @@ defineProps({
   :deep(.cell-id) {
     font-family: 'Monaco', 'Menlo', monospace;
     font-size: 12px;
-    color: #909399;
+    color: var(--color-text-secondary, #909399);
   }
   
   // 可点击ID样式
@@ -53,7 +53,7 @@ defineProps({
     align-items: center;
     gap: 8px;
     font-weight: 500;
-    color: #303133;
+    color: var(--color-text-primary, #303133);
     
     .el-icon {
       color: #409eff;
@@ -63,14 +63,14 @@ defineProps({
   // 次要文本样式
   :deep(.cell-secondary) {
     font-size: 12px;
-    color: #909399;
+    color: var(--color-text-secondary, #909399);
   }
   
   // 代码样式
   :deep(.cell-code) {
     font-family: 'Monaco', 'Menlo', monospace;
     font-size: 12px;
-    color: #606266;
+    color: var(--color-text-regular, #606266);
   }
 }
 </style>

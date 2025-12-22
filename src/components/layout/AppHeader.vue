@@ -71,18 +71,22 @@ const handleToggleStatus = () => {
 <style scoped lang="less">
 .app-header {
   height: 60px;
-  background-color: #fff;
-  border-bottom: 1px solid #e4e7ed;
+  background-color: var(--color-bg-card, #fff);
+  border-bottom: 1px solid var(--color-border, #e4e7ed);
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 0 20px;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 1px 4px var(--color-shadow, rgba(0, 0, 0, 0.08));
 }
 
 .header-left {
   display: flex;
   align-items: center;
+  
+  :deep(.el-breadcrumb__inner) {
+    color: var(--color-text-regular, #606266);
+  }
 }
 
 .header-right {
@@ -97,7 +101,7 @@ const handleToggleStatus = () => {
   gap: 8px;
   padding: 6px 12px;
   border-radius: 20px;
-  background-color: #f5f7fa;
+  background-color: var(--color-bg-page, #f5f7fa);
   
   .status-dot {
     width: 8px;
@@ -116,7 +120,7 @@ const handleToggleStatus = () => {
   
   .status-text {
     font-size: 13px;
-    color: #606266;
+    color: var(--color-text-regular, #606266);
   }
 }
 </style>

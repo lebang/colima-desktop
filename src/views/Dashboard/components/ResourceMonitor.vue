@@ -91,6 +91,7 @@ const getProgressColor = (percentage) => {
   font-weight: 600;
   font-size: 14px;
   min-height: 24px;
+  color: var(--color-text-primary, #303133);
   
   > span {
     display: flex;
@@ -120,13 +121,13 @@ const getProgressColor = (percentage) => {
     
     .resource-label {
       font-size: 13px;
-      color: #606266;
+      color: var(--color-text-regular, #606266);
     }
     
     .resource-value {
       font-size: 13px;
       font-weight: 600;
-      color: #303133;
+      color: var(--color-text-primary, #303133);
     }
   }
 }

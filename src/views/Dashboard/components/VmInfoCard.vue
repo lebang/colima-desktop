@@ -120,6 +120,7 @@ const handleRestart = () => emit('restart')
   font-weight: 600;
   font-size: 14px;
   min-height: 24px;
+  color: var(--color-text-primary, #303133);
   
   > span {
     display: flex;
@@ -141,13 +142,13 @@ const handleRestart = () => emit('restart')
     .vm-info-label {
       display: block;
       font-size: 12px;
-      color: #909399;
+      color: var(--color-text-secondary, #909399);
       margin-bottom: 4px;
     }
     .vm-info-value {
       font-size: 14px;
       font-weight: 500;
-      color: #303133;
+      color: var(--color-text-primary, #303133);
     }
   }
 }

@@ -16,10 +16,35 @@ const colimaStore = useColimaStore()
 const langTrigger = ref(0)
 let unsubscribe = null
 
+// 初始化主题
+const initTheme = () => {
+  const theme = localStorage.getItem('app-theme') || 'auto'
+  const html = document.documentElement
+  html.classList.remove('light', 'dark')
+
+  if (theme === 'auto') {
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
+    html.classList.add(prefersDark ? 'dark' : 'light')
+  } else {
+    html.classList.add(theme)
+  }
+}
+
 onMounted(() => {
+  // 初始化主题
+  initTheme()
+  
   // 监听语言变化事件
   unsubscribe = i18nScope.on('change', () => {
     langTrigger.value++
+  })
+  
+  // 监听系统主题变化
+  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
+    const theme = localStorage.getItem('app-theme')
+    if (theme === 'auto' || !theme) {
+      initTheme()
+    }
   })
 })
 
@@ -127,7 +152,7 @@ html, body, #app {
 .main-container {
   flex: 1;
   flex-direction: column;
-  background-color: #f5f7fa;
+  background-color: var(--color-bg-page, #f5f7fa);
   overflow: hidden;
 }
 
@@ -135,6 +160,6 @@ html, body, #app {
   flex: 1;
   padding: 20px;
   overflow-y: auto;
-  background-color: #f5f7fa;
+  background-color: var(--color-bg-page, #f5f7fa);
 }
 </style>

@@ -168,13 +168,13 @@ const getStatusType = () => {
     
     .status-label {
       font-size: 12px;
-      color: #909399;
+      color: var(--color-text-secondary, #909399);
       margin-bottom: 4px;
     }
     .status-value {
       font-size: 22px;
       font-weight: 600;
-      color: #303133;
+      color: var(--color-text-primary, #303133);
       display: flex;
       align-items: baseline;
       gap: 6px;

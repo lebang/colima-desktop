@@ -67,6 +67,7 @@ const handleAction = (action) => {
   justify-content: space-between;
   font-weight: 600;
   font-size: 14px;
+  color: var(--color-text-primary, #303133);
   
   > span {
     display: flex;
