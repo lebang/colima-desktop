@@ -1,6 +1,7 @@
 <script setup>
 import { Loading } from '@element-plus/icons-vue'
 import { Monitor, Box, Files, Coin } from '@element-plus/icons-vue'
+import { t } from '@/languages'
 
 const props = defineProps({
   // Colima 状态
@@ -38,11 +39,11 @@ const props = defineProps({
 // 计算状态文本
 const getStatusText = () => {
   if (props.isLoading) {
-    if (props.vmStatus === 'starting') return '启动中'
-    if (props.vmStatus === 'stopping') return '停止中'
-    return '重启中'
+    if (props.vmStatus === 'starting') return t('启动中')
+    if (props.vmStatus === 'stopping') return t('停止中')
+    return t('重启中')
   }
-  return props.isRunning ? '运行中' : '已停止'
+  return props.isRunning ? t('运行中') : t('已停止')
 }
 
 // 计算状态类型
@@ -80,11 +81,11 @@ const getStatusType = () => {
           <el-icon :size="28"><Box /></el-icon>
         </div>
         <div class="status-info">
-          <div class="status-label">容器</div>
+          <div class="status-label">{{ t('容器') }}</div>
           <div class="status-value">
             {{ containerCount }}
             <span v-if="runningContainerCount > 0" class="running-count">
-              {{ runningContainerCount }} 运行
+              {{ runningContainerCount }} {{ t('运行中') }}
             </span>
           </div>
         </div>
@@ -97,7 +98,7 @@ const getStatusType = () => {
           <el-icon :size="28"><Files /></el-icon>
         </div>
         <div class="status-info">
-          <div class="status-label">镜像</div>
+          <div class="status-label">{{ t('镜像') }}</div>
           <div class="status-value">{{ imageCount }}</div>
         </div>
       </div>
@@ -109,7 +110,7 @@ const getStatusType = () => {
           <el-icon :size="28"><Coin /></el-icon>
         </div>
         <div class="status-info">
-          <div class="status-label">数据卷</div>
+          <div class="status-label">{{ t('数据卷') }}</div>
           <div class="status-value">{{ volumeCount }}</div>
         </div>
       </div>

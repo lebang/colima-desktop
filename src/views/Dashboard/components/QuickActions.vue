@@ -1,5 +1,6 @@
 <script setup>
 import { Promotion, Plus, Download, FolderAdd, Connection } from '@element-plus/icons-vue'
+import { t } from '@/languages'
 
 const props = defineProps({
   isRunning: {
@@ -19,7 +20,7 @@ const handleAction = (action) => {
   <el-card shadow="hover" class="quick-actions-card">
     <template #header>
       <div class="card-header">
-        <span><el-icon><Promotion /></el-icon> 快捷操作</span>
+        <span><el-icon><Promotion /></el-icon> {{ t('快捷操作') }}</span>
       </div>
     </template>
     <div class="action-buttons">
@@ -28,28 +29,28 @@ const handleAction = (action) => {
         :disabled="!isRunning"
         @click="handleAction('createContainer')"
       >
-        创建容器
+        {{ t('创建容器') }}
       </el-button>
       <el-button 
         :icon="Download"
         :disabled="!isRunning"
         @click="handleAction('pullImage')"
       >
-        拉取镜像
+        {{ t('拉取镜像') }}
       </el-button>
       <el-button 
         :icon="FolderAdd"
         :disabled="!isRunning"
         @click="handleAction('createVolume')"
       >
-        创建数据卷
+        {{ t('创建数据卷') }}
       </el-button>
       <el-button 
         :icon="Connection"
         :disabled="!isRunning"
         @click="handleAction('createNetwork')"
       >
-        创建网络
+        {{ t('创建网络') }}
       </el-button>
     </div>
   </el-card>

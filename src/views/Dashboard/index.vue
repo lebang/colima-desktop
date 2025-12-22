@@ -2,6 +2,7 @@
 import { onMounted, onUnmounted, ref, computed } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { useColimaStore, useDockerStore } from '@/stores'
+import { t } from '@/languages'
 
 // 导入子组件
 import StatusCards from './components/StatusCards.vue'
@@ -28,9 +29,9 @@ const handleRefresh = async () => {
   isRefreshing.value = true
   try {
     await colimaStore.refreshAll()
-    ElMessage.success('数据已刷新')
+    ElMessage.success(t('数据已刷新'))
   } catch (error) {
-    ElMessage.error('刷新失败: ' + error.message)
+    ElMessage.error(t('刷新失败') + ': ' + error.message)
   } finally {
     isRefreshing.value = false
   }
@@ -41,33 +42,37 @@ const handleStart = async () => {
   try {
     const result = await colimaStore.start()
     if (result.success) {
-      ElMessage.success('Colima 启动成功')
+      ElMessage.success(t('Colima 启动成功'))
     } else {
-      ElMessage.error('启动失败: ' + result.message)
+      ElMessage.error(t('启动失败') + ': ' + result.message)
     }
   } catch (error) {
-    ElMessage.error('启动失败: ' + error.message)
+    ElMessage.error(t('启动失败') + ': ' + error.message)
   }
 }
 
 // 停止 Colima
 const handleStop = async () => {
   try {
-    await ElMessageBox.confirm('确定要停止 Colima 吗？所有容器将会停止运行。', '确认停止', {
-      confirmButtonText: '确定',
-      cancelButtonText: '取消',
-      type: 'warning'
-    })
+    await ElMessageBox.confirm(
+      t('确定要停止 Colima 吗？所有容器将会停止运行。'), 
+      t('确认停止'), 
+      {
+        confirmButtonText: t('确定'),
+        cancelButtonText: t('取消'),
+        type: 'warning'
+      }
+    )
     
     const result = await colimaStore.stop()
     if (result.success) {
-      ElMessage.success('Colima 已停止')
+      ElMessage.success(t('Colima 已停止'))
     } else {
-      ElMessage.error('停止失败: ' + result.message)
+      ElMessage.error(t('停止失败') + ': ' + result.message)
     }
   } catch (error) {
     if (error !== 'cancel') {
-      ElMessage.error('停止失败: ' + error.message)
+      ElMessage.error(t('停止失败') + ': ' + error.message)
     }
   }
 }
@@ -75,21 +80,25 @@ const handleStop = async () => {
 // 重启 Colima
 const handleRestart = async () => {
   try {
-    await ElMessageBox.confirm('确定要重启 Colima 吗？所有容器将会重启。', '确认重启', {
-      confirmButtonText: '确定',
-      cancelButtonText: '取消',
-      type: 'warning'
-    })
+    await ElMessageBox.confirm(
+      t('确定要重启 Colima 吗？所有容器将会重启。'), 
+      t('确认重启'), 
+      {
+        confirmButtonText: t('确定'),
+        cancelButtonText: t('取消'),
+        type: 'warning'
+      }
+    )
     
     const result = await colimaStore.restart()
     if (result.success) {
-      ElMessage.success('Colima 重启成功')
+      ElMessage.success(t('Colima 重启成功'))
     } else {
-      ElMessage.error('重启失败: ' + result.message)
+      ElMessage.error(t('重启失败') + ': ' + result.message)
     }
   } catch (error) {
     if (error !== 'cancel') {
-      ElMessage.error('重启失败: ' + error.message)
+      ElMessage.error(t('重启失败') + ': ' + error.message)
     }
   }
 }
@@ -97,46 +106,46 @@ const handleRestart = async () => {
 // 快捷操作处理
 const handleQuickAction = (action) => {
   if (!colimaStore.isRunning) {
-    ElMessage.warning('请先启动 Colima')
+    ElMessage.warning(t('请先启动 Colima'))
     return
   }
   
   switch (action) {
     case 'createContainer':
-      ElMessage.info('创建容器功能开发中...')
+      ElMessage.info(t('创建容器功能开发中...'))
       break
     case 'pullImage':
-      ElMessageBox.prompt('请输入镜像名称', '拉取镜像', {
-        confirmButtonText: '拉取',
-        cancelButtonText: '取消',
-        inputPlaceholder: '例如: nginx:latest'
+      ElMessageBox.prompt(t('请输入镜像名称'), t('拉取镜像'), {
+        confirmButtonText: t('确定'),
+        cancelButtonText: t('取消'),
+        inputPlaceholder: t('例如: nginx:latest')
       }).then(({ value }) => {
         if (value) {
-          ElMessage.info(`正在拉取镜像: ${value}`)
+          ElMessage.info(t('正在拉取镜像: {}', value))
           // TODO: 实现镜像拉取
         }
       }).catch(() => {})
       break
     case 'createVolume':
-      ElMessageBox.prompt('请输入数据卷名称', '创建数据卷', {
-        confirmButtonText: '创建',
-        cancelButtonText: '取消',
-        inputPlaceholder: '例如: my-volume'
+      ElMessageBox.prompt(t('请输入数据卷名称'), t('创建数据卷'), {
+        confirmButtonText: t('确定'),
+        cancelButtonText: t('取消'),
+        inputPlaceholder: t('例如: my-volume')
       }).then(({ value }) => {
         if (value) {
-          ElMessage.info(`正在创建数据卷: ${value}`)
+          ElMessage.info(t('正在创建数据卷: {}', value))
           // TODO: 实现数据卷创建
         }
       }).catch(() => {})
       break
     case 'createNetwork':
-      ElMessageBox.prompt('请输入网络名称', '创建网络', {
-        confirmButtonText: '创建',
-        cancelButtonText: '取消',
-        inputPlaceholder: '例如: my-network'
+      ElMessageBox.prompt(t('请输入网络名称'), t('创建网络'), {
+        confirmButtonText: t('确定'),
+        cancelButtonText: t('取消'),
+        inputPlaceholder: t('例如: my-network')
       }).then(({ value }) => {
         if (value) {
-          ElMessage.info(`正在创建网络: ${value}`)
+          ElMessage.info(t('正在创建网络: {}', value))
           // TODO: 实现网络创建
         }
       }).catch(() => {})

@@ -1,5 +1,6 @@
 <script setup>
 import { DataAnalysis } from '@element-plus/icons-vue'
+import { t } from '@/languages'
 
 const props = defineProps({
   cpuUsage: {
@@ -32,14 +33,14 @@ const getProgressColor = (percentage) => {
   <el-card shadow="hover" class="resource-card">
     <template #header>
       <div class="card-header">
-        <span><el-icon><DataAnalysis /></el-icon> 资源监控</span>
-        <el-tag v-if="!isRunning" type="info" size="small">未运行</el-tag>
+        <span><el-icon><DataAnalysis /></el-icon> {{ t('资源监控') }}</span>
+        <el-tag v-if="!isRunning" type="info" size="small">{{ t('未运行') }}</el-tag>
       </div>
     </template>
     <div class="resource-monitor">
       <div class="resource-item">
         <div class="resource-header">
-          <span class="resource-label">CPU</span>
+          <span class="resource-label">{{ t('CPU') }}</span>
           <span class="resource-value">{{ cpuUsage }}%</span>
         </div>
         <el-progress 
@@ -51,7 +52,7 @@ const getProgressColor = (percentage) => {
       </div>
       <div class="resource-item">
         <div class="resource-header">
-          <span class="resource-label">内存</span>
+          <span class="resource-label">{{ t('内存') }}</span>
           <span class="resource-value">{{ memoryUsage }}%</span>
         </div>
         <el-progress 
@@ -63,7 +64,7 @@ const getProgressColor = (percentage) => {
       </div>
       <div class="resource-item">
         <div class="resource-header">
-          <span class="resource-label">磁盘</span>
+          <span class="resource-label">{{ t('磁盘') }}</span>
           <span class="resource-value">{{ diskUsage }}%</span>
         </div>
         <el-progress 

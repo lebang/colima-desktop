@@ -1,6 +1,7 @@
 <script setup>
 import { ref, shallowRef, markRaw, computed } from 'vue'
 import { useColimaStore } from '@/stores'
+import { t } from '@/languages'
 import { Odometer, Box, Monitor, Files, Coin, Connection, Setting, Expand, Fold, VideoPlay, VideoPause } from '@element-plus/icons-vue'
 import Dashboard from '@/views/Dashboard/index.vue'
 import Containers from '@/views/Containers/index.vue'
@@ -8,6 +9,7 @@ import Images from '@/views/Images/index.vue'
 import Volumes from '@/views/Volumes/index.vue'
 import Networks from '@/views/Networks/index.vue'
 import Settings from '@/views/Settings/index.vue'
+import LangSwitch from '@/components/LangSwitch.vue'
 
 const colimaStore = useColimaStore()
 
@@ -27,18 +29,18 @@ const pageComponents = {
   settings: markRaw(Settings)
 }
 
-// 页面标题映射
-const pageTitles = {
-  dashboard: '仪表盘',
-  containers: '容器管理',
-  images: '镜像管理',
-  volumes: '数据卷管理',
-  networks: '网络管理',
-  settings: '设置'
-}
+// 页面标题映射（使用 t 函数）
+const pageTitles = computed(() => ({
+  dashboard: t('仪表盘'),
+  containers: t('容器管理'),
+  images: t('镜像管理'),
+  volumes: t('数据卷管理'),
+  networks: t('网络管理'),
+  settings: t('设置')
+}))
 
 // 获取当前页面标题
-const pageTitle = computed(() => pageTitles[activeMenu.value] || '仪表盘')
+const pageTitle = computed(() => pageTitles.value[activeMenu.value] || t('仪表盘'))
 
 // 当前显示的组件
 const currentComponent = shallowRef(pageComponents.dashboard)
@@ -75,35 +77,35 @@ const toggleCollapse = () => {
       >
         <el-menu-item index="dashboard">
           <el-icon><Odometer /></el-icon>
-          <template #title>仪表盘</template>
+          <template #title>{{ t('仪表盘') }}</template>
         </el-menu-item>
         
         <el-sub-menu index="docker">
           <template #title>
             <el-icon><Box /></el-icon>
-            <span>Docker 管理</span>
+            <span>{{ t('Docker 管理') }}</span>
           </template>
           <el-menu-item index="containers">
             <el-icon><Monitor /></el-icon>
-            <template #title>容器</template>
+            <template #title>{{ t('容器') }}</template>
           </el-menu-item>
           <el-menu-item index="images">
             <el-icon><Files /></el-icon>
-            <template #title>镜像</template>
+            <template #title>{{ t('镜像') }}</template>
           </el-menu-item>
           <el-menu-item index="volumes">
             <el-icon><Coin /></el-icon>
-            <template #title>数据卷</template>
+            <template #title>{{ t('数据卷') }}</template>
           </el-menu-item>
           <el-menu-item index="networks">
             <el-icon><Connection /></el-icon>
-            <template #title>网络</template>
+            <template #title>{{ t('网络') }}</template>
           </el-menu-item>
         </el-sub-menu>
 
         <el-menu-item index="settings">
           <el-icon><Setting /></el-icon>
-          <template #title>设置</template>
+          <template #title>{{ t('设置') }}</template>
         </el-menu-item>
       </el-menu>
 
@@ -120,18 +122,21 @@ const toggleCollapse = () => {
       <el-header class="app-header">
         <div class="header-left">
           <el-breadcrumb separator="/">
-            <el-breadcrumb-item>首页</el-breadcrumb-item>
+            <el-breadcrumb-item>{{ t('首页') }}</el-breadcrumb-item>
             <el-breadcrumb-item>{{ pageTitle }}</el-breadcrumb-item>
           </el-breadcrumb>
         </div>
         <div class="header-right">
           <!-- Colima 状态指示器 -->
-          <el-tooltip :content="colimaStore.isRunning ? 'Colima 运行中' : 'Colima 已停止'" placement="bottom">
+          <el-tooltip :content="colimaStore.isRunning ? t('Colima 运行中') : t('Colima 已停止')" placement="bottom">
             <div class="status-indicator">
               <span :class="['status-dot', colimaStore.isRunning ? 'running' : 'stopped']"></span>
-              <span class="status-text">{{ colimaStore.isRunning ? '运行中' : '已停止' }}</span>
+              <span class="status-text">{{ colimaStore.isRunning ? t('运行中') : t('已停止') }}</span>
             </div>
           </el-tooltip>
+          
+          <!-- 语言切换 -->
+          <LangSwitch />
           
           <!-- 快捷操作 -->
           <el-button-group class="quick-buttons">
@@ -144,7 +149,7 @@ const toggleCollapse = () => {
                 <VideoPause v-if="colimaStore.isRunning" />
                 <VideoPlay v-else />
               </el-icon>
-              {{ colimaStore.isRunning ? '停止' : '启动' }}
+              {{ colimaStore.isRunning ? t('停止') : t('启动') }}
             </el-button>
           </el-button-group>
         </div>

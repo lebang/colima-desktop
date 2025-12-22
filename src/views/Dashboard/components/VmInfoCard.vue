@@ -1,5 +1,6 @@
 <script setup>
 import { Setting, Refresh, VideoPlay, VideoPause, RefreshRight } from '@element-plus/icons-vue'
+import { t } from '@/languages'
 
 const props = defineProps({
   vmInfo: {
@@ -36,7 +37,7 @@ const handleRestart = () => emit('restart')
   <el-card shadow="hover" class="vm-info-card">
     <template #header>
       <div class="card-header">
-        <span><el-icon><Setting /></el-icon> 虚拟机信息</span>
+        <span><el-icon><Setting /></el-icon> {{ t('虚拟机信息') }}</span>
         <el-button 
           :icon="Refresh" 
           circle 
@@ -49,27 +50,27 @@ const handleRestart = () => emit('restart')
     <div class="vm-content">
       <div class="vm-info-grid">
         <div class="vm-info-item">
-          <span class="vm-info-label">名称</span>
+          <span class="vm-info-label">{{ t('名称') }}</span>
           <span class="vm-info-value">{{ vmInfo.name || '-' }}</span>
         </div>
         <div class="vm-info-item">
-          <span class="vm-info-label">运行时</span>
+          <span class="vm-info-label">{{ t('运行时') }}</span>
           <span class="vm-info-value">{{ vmInfo.runtime || '-' }}</span>
         </div>
         <div class="vm-info-item">
-          <span class="vm-info-label">架构</span>
+          <span class="vm-info-label">{{ t('架构') }}</span>
           <span class="vm-info-value">{{ vmInfo.arch || '-' }}</span>
         </div>
         <div class="vm-info-item">
-          <span class="vm-info-label">CPU</span>
-          <span class="vm-info-value">{{ vmInfo.cpu || '-' }} 核</span>
+          <span class="vm-info-label">{{ t('CPU') }}</span>
+          <span class="vm-info-value">{{ vmInfo.cpu || '-' }} {{ t('核') }}</span>
         </div>
         <div class="vm-info-item">
-          <span class="vm-info-label">内存</span>
+          <span class="vm-info-label">{{ t('内存') }}</span>
           <span class="vm-info-value">{{ vmInfo.memory || '-' }} GB</span>
         </div>
         <div class="vm-info-item">
-          <span class="vm-info-label">磁盘</span>
+          <span class="vm-info-label">{{ t('磁盘') }}</span>
           <span class="vm-info-value">{{ vmInfo.disk || '-' }} GB</span>
         </div>
       </div>
@@ -81,7 +82,7 @@ const handleRestart = () => emit('restart')
           :loading="vmStatus === 'starting'"
           @click="handleStart"
         >
-          启动
+          {{ t('启动') }}
         </el-button>
         <el-button 
           type="danger" 
@@ -90,7 +91,7 @@ const handleRestart = () => emit('restart')
           :loading="vmStatus === 'stopping'"
           @click="handleStop"
         >
-          停止
+          {{ t('停止') }}
         </el-button>
         <el-button 
           type="warning" 
@@ -99,7 +100,7 @@ const handleRestart = () => emit('restart')
           :loading="vmStatus === 'restarting'"
           @click="handleRestart"
         >
-          重启
+          {{ t('重启') }}
         </el-button>
       </div>
     </div>
