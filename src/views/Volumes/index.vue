@@ -1,174 +1,167 @@
 <script setup>
-import { ref } from 'vue'
-import { Plus, Search, Refresh, Delete, Coin, View } from '@element-plus/icons-vue'
+import { ref, computed, onMounted } from 'vue'
+import { Plus, Delete, Coin } from '@element-plus/icons-vue'
+import { useDockerStore } from '@/stores/docker'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import { PageHeader, SearchBar, DataTable, FormDialog } from '@/components/common'
 
-// 模拟数据卷数据
-const volumes = ref([
-  { name: 'mysql-data', driver: 'local', mountpoint: '/var/lib/docker/volumes/mysql-data/_data', created: '1周前' },
-  { name: 'redis-data', driver: 'local', mountpoint: '/var/lib/docker/volumes/redis-data/_data', created: '2周前' },
-  { name: 'nginx-config', driver: 'local', mountpoint: '/var/lib/docker/volumes/nginx-config/_data', created: '3天前' },
-  { name: 'app-logs', driver: 'local', mountpoint: '/var/lib/docker/volumes/app-logs/_data', created: '5天前' },
-])
+const dockerStore = useDockerStore()
 
 const searchQuery = ref('')
+const loading = ref(false)
 const createDialogVisible = ref(false)
 const newVolumeName = ref('')
+const creating = ref(false)
 
-// 创建数据卷
+// 过滤后的数据卷列表
+const filteredVolumes = computed(() => {
+  let result = dockerStore.volumes
+  
+  if (searchQuery.value) {
+    const query = searchQuery.value.toLowerCase()
+    result = result.filter(v => v.name.toLowerCase().includes(query))
+  }
+  
+  return result
+})
+
+// 刷新数据卷列表
+const handleRefresh = async () => {
+  loading.value = true
+  try {
+    await dockerStore.fetchVolumes()
+  } finally {
+    loading.value = false
+  }
+}
+
+// 打开创建对话框
 const handleCreate = () => {
+  newVolumeName.value = ''
   createDialogVisible.value = true
 }
 
-const confirmCreate = () => {
-  if (newVolumeName.value) {
-    volumes.value.unshift({
-      name: newVolumeName.value,
-      driver: 'local',
-      mountpoint: `/var/lib/docker/volumes/${newVolumeName.value}/_data`,
-      created: '刚刚'
-    })
-    createDialogVisible.value = false
-    newVolumeName.value = ''
+// 确认创建数据卷
+const confirmCreate = async () => {
+  if (!newVolumeName.value.trim()) {
+    ElMessage.warning('请输入数据卷名称')
+    return
+  }
+  
+  creating.value = true
+  try {
+    const result = await dockerStore.createVolume(newVolumeName.value.trim())
+    if (result.success) {
+      ElMessage.success(result.message)
+      createDialogVisible.value = false
+      newVolumeName.value = ''
+    } else {
+      ElMessage.error(result.message)
+    }
+  } finally {
+    creating.value = false
   }
 }
 
 // 删除数据卷
-const handleDelete = (row) => {
-  const index = volumes.value.findIndex(v => v.name === row.name)
-  if (index > -1) {
-    volumes.value.splice(index, 1)
+const handleDelete = async (row) => {
+  try {
+    await ElMessageBox.confirm(
+      `确定要删除数据卷 "${row.name}" 吗？删除后数据将无法恢复！`,
+      '确认删除',
+      {
+        confirmButtonText: '删除',
+        cancelButtonText: '取消',
+        type: 'warning',
+      }
+    )
+    
+    loading.value = true
+    const result = await dockerStore.removeVolume(row.name)
+    ElMessage[result.success ? 'success' : 'error'](result.message)
+  } catch {
+    // 用户取消
+  } finally {
+    loading.value = false
   }
 }
+
+onMounted(() => handleRefresh())
 </script>
 
 <template>
-  <div class="volumes-page">
-    <div class="page-header">
-      <h2>数据卷管理</h2>
+  <div class="page-container">
+    <PageHeader title="数据卷管理">
       <el-button type="primary" :icon="Plus" @click="handleCreate">创建数据卷</el-button>
-    </div>
+    </PageHeader>
 
-    <!-- 搜索 -->
-    <el-card shadow="never" class="filter-card">
-      <el-row :gutter="20">
-        <el-col :span="8">
-          <el-input 
-            v-model="searchQuery" 
-            placeholder="搜索数据卷名称..." 
-            :prefix-icon="Search"
-            clearable
-          />
-        </el-col>
-        <el-col :span="16" style="text-align: right">
-          <el-button :icon="Refresh">刷新</el-button>
-          <el-button type="danger" :icon="Delete">清理未使用数据卷</el-button>
-        </el-col>
-      </el-row>
-    </el-card>
+    <SearchBar 
+      v-model="searchQuery" 
+      placeholder="搜索数据卷名称..." 
+      :loading="loading"
+      @refresh="handleRefresh"
+    />
 
-    <!-- 数据卷列表 -->
-    <el-card shadow="never" class="table-card">
-      <el-table :data="volumes" stripe style="width: 100%">
-        <el-table-column prop="name" label="名称" min-width="150">
-          <template #default="{ row }">
-            <span class="volume-name">
-              <el-icon><Coin /></el-icon>
-              {{ row.name }}
-            </span>
-          </template>
-        </el-table-column>
-        <el-table-column prop="driver" label="驱动" width="100">
-          <template #default="{ row }">
-            <el-tag type="info" size="small">{{ row.driver }}</el-tag>
-          </template>
-        </el-table-column>
-        <el-table-column prop="mountpoint" label="挂载点" min-width="300">
-          <template #default="{ row }">
-            <el-tooltip :content="row.mountpoint" placement="top">
-              <span class="mountpoint">{{ row.mountpoint }}</span>
-            </el-tooltip>
-          </template>
-        </el-table-column>
-        <el-table-column prop="created" label="创建时间" width="120" />
-        <el-table-column label="操作" width="150" fixed="right">
-          <template #default="{ row }">
-            <el-button 
-              type="primary" 
-              size="small" 
-              :icon="View"
-            >
-              查看
-            </el-button>
-            <el-button 
-              type="danger" 
-              size="small" 
-              :icon="Delete"
-              @click="handleDelete(row)"
-            >
-              删除
-            </el-button>
-          </template>
-        </el-table-column>
-      </el-table>
-    </el-card>
+    <DataTable :data="filteredVolumes" :loading="loading" empty-text="暂无数据卷">
+      <el-table-column prop="name" label="名称" min-width="200">
+        <template #default="{ row }">
+          <span class="cell-name">
+            <el-icon><Coin /></el-icon>
+            {{ row.name }}
+          </span>
+        </template>
+      </el-table-column>
+      <el-table-column prop="driver" label="驱动" width="120">
+        <template #default="{ row }">
+          <el-tag type="info" size="small">{{ row.driver }}</el-tag>
+        </template>
+      </el-table-column>
+      <el-table-column prop="mountpoint" label="挂载点" min-width="350">
+        <template #default="{ row }">
+          <el-tooltip :content="row.mountpoint" placement="top">
+            <span class="cell-code mountpoint">{{ row.mountpoint }}</span>
+          </el-tooltip>
+        </template>
+      </el-table-column>
+      <el-table-column label="操作" width="100" fixed="right">
+        <template #default="{ row }">
+          <el-button type="danger" size="small" :icon="Delete" @click="handleDelete(row)">
+            删除
+          </el-button>
+        </template>
+      </el-table-column>
+    </DataTable>
 
     <!-- 创建数据卷对话框 -->
-    <el-dialog v-model="createDialogVisible" title="创建数据卷" width="500px">
-      <el-form label-width="80px">
-        <el-form-item label="名称">
-          <el-input 
-            v-model="newVolumeName" 
-            placeholder="请输入数据卷名称"
-          />
-        </el-form-item>
-      </el-form>
-      <template #footer>
-        <el-button @click="createDialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="confirmCreate">创建</el-button>
-      </template>
-    </el-dialog>
+    <FormDialog
+      v-model="createDialogVisible"
+      title="创建数据卷"
+      confirm-text="创建"
+      :loading="creating"
+      tip="提示：数据卷名称只能包含字母、数字、下划线和连字符"
+      @confirm="confirmCreate"
+    >
+      <el-form-item label="名称">
+        <el-input 
+          v-model="newVolumeName" 
+          placeholder="请输入数据卷名称"
+          @keyup.enter="confirmCreate"
+        />
+      </el-form-item>
+    </FormDialog>
   </div>
 </template>
 
 <style scoped lang="less">
-.volumes-page {
+.page-container {
   padding: 20px;
 }
 
-.page-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20px;
-  
-  h2 {
-    margin: 0;
-    font-size: 20px;
-    font-weight: 600;
-  }
-}
-
-.filter-card {
-  margin-bottom: 20px;
-}
-
-.table-card {
-  .volume-name {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-weight: 500;
-    color: #303133;
-    
-    .el-icon {
-      color: #409eff;
-    }
-  }
-  
-  .mountpoint {
-    font-family: 'Monaco', 'Menlo', monospace;
-    font-size: 12px;
-    color: #909399;
-  }
+.mountpoint {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  display: block;
+  max-width: 100%;
 }
 </style>

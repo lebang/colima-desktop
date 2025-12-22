@@ -11,6 +11,49 @@ pub struct CommandOutput {
     pub code: Option<i32>,
 }
 
+// ========== 参数构建器 ==========
+
+/// 简化命令参数构建的辅助结构
+struct ArgsBuilder {
+    args: Vec<String>,
+}
+
+impl ArgsBuilder {
+    fn new(initial: &[&str]) -> Self {
+        Self {
+            args: initial.iter().map(|s| s.to_string()).collect(),
+        }
+    }
+
+    /// 添加可选的键值对参数
+    fn add_opt<T: ToString>(&mut self, flag: &str, value: Option<T>) -> &mut Self {
+        if let Some(v) = value {
+            self.args.push(flag.to_string());
+            self.args.push(v.to_string());
+        }
+        self
+    }
+
+    /// 添加可选的布尔标志
+    fn add_flag(&mut self, flag: &str, condition: bool) -> &mut Self {
+        if condition {
+            self.args.push(flag.to_string());
+        }
+        self
+    }
+
+    /// 添加单个参数
+    fn add(&mut self, arg: &str) -> &mut Self {
+        self.args.push(arg.to_string());
+        self
+    }
+
+    /// 获取参数引用切片用于命令执行
+    fn as_refs(&self) -> Vec<&str> {
+        self.args.iter().map(|s| s.as_str()).collect()
+    }
+}
+
 // ========== 通用命令执行函数 ==========
 
 fn run_command(cmd: &str, args: &[&str]) -> CommandOutput {
@@ -30,107 +73,81 @@ fn run_command(cmd: &str, args: &[&str]) -> CommandOutput {
     }
 }
 
+/// 使用 ArgsBuilder 执行命令
+fn run_with_builder(cmd: &str, builder: &ArgsBuilder) -> CommandOutput {
+    run_command(cmd, &builder.as_refs())
+}
+
 // ========== Colima 命令 ==========
 
-/// 获取 Colima 状态 (JSON 格式)
 #[tauri::command]
 fn colima_status() -> CommandOutput {
     run_command("colima", &["status", "-p", "default", "--json"])
 }
 
-/// 获取 Colima 列表 (JSON 格式)
 #[tauri::command]
 fn colima_list() -> CommandOutput {
     run_command("colima", &["list", "--json"])
 }
 
-/// 启动 Colima
 #[tauri::command]
 async fn colima_start(cpu: Option<u32>, memory: Option<u32>, disk: Option<u32>) -> CommandOutput {
-    let mut args = vec!["start"];
-    
-    let cpu_str;
-    let memory_str;
-    let disk_str;
-    
-    if let Some(c) = cpu {
-        cpu_str = c.to_string();
-        args.push("--cpu");
-        args.push(&cpu_str);
-    }
-    if let Some(m) = memory {
-        memory_str = m.to_string();
-        args.push("--memory");
-        args.push(&memory_str);
-    }
-    if let Some(d) = disk {
-        disk_str = d.to_string();
-        args.push("--disk");
-        args.push(&disk_str);
-    }
-    
-    run_command("colima", &args)
+    let mut builder = ArgsBuilder::new(&["start"]);
+    builder
+        .add_opt("--cpu", cpu)
+        .add_opt("--memory", memory)
+        .add_opt("--disk", disk);
+    run_with_builder("colima", &builder)
 }
 
-/// 停止 Colima
 #[tauri::command]
 async fn colima_stop() -> CommandOutput {
     run_command("colima", &["stop"])
 }
 
-/// 删除 Colima 实例
 #[tauri::command]
 async fn colima_delete(force: Option<bool>) -> CommandOutput {
-    let mut args = vec!["delete"];
-    if force.unwrap_or(false) {
-        args.push("--force");
-    }
-    run_command("colima", &args)
+    let mut builder = ArgsBuilder::new(&["delete"]);
+    builder.add_flag("--force", force.unwrap_or(false));
+    run_with_builder("colima", &builder)
 }
 
-// ========== Docker 命令 ==========
+// ========== Docker 查询命令 ==========
 
-/// 获取容器列表 (JSON 格式)
 #[tauri::command]
 fn docker_container_list(all: Option<bool>) -> CommandOutput {
-    let mut args = vec!["ps", "--format", "json"];
-    if all.unwrap_or(true) {
-        args.insert(1, "-a");
-    }
-    run_command("docker", &args)
+    let mut builder = ArgsBuilder::new(&["ps"]);
+    builder
+        .add_flag("-a", all.unwrap_or(true))
+        .add("--format").add("json");
+    run_with_builder("docker", &builder)
 }
 
-/// 获取镜像列表 (JSON 格式)
 #[tauri::command]
 fn docker_image_list() -> CommandOutput {
     run_command("docker", &["images", "--format", "json"])
 }
 
-/// 获取数据卷列表 (JSON 格式)
 #[tauri::command]
 fn docker_volume_list() -> CommandOutput {
     run_command("docker", &["volume", "ls", "--format", "json"])
 }
 
-/// 获取网络列表 (JSON 格式)
 #[tauri::command]
 fn docker_network_list() -> CommandOutput {
     run_command("docker", &["network", "ls", "--format", "json"])
 }
 
-/// 获取 Docker 系统信息 (JSON 格式)
 #[tauri::command]
 fn docker_info() -> CommandOutput {
     run_command("docker", &["info", "--format", "json"])
 }
 
-/// 获取 Docker 磁盘使用情况 (JSON 格式)
 #[tauri::command]
 fn docker_disk_usage() -> CommandOutput {
     run_command("docker", &["system", "df", "--format", "json"])
 }
 
-/// 获取容器资源使用统计 (JSON 格式)
 #[tauri::command]
 fn docker_stats() -> CommandOutput {
     run_command("docker", &["stats", "--no-stream", "--format", "json"])
@@ -138,104 +155,82 @@ fn docker_stats() -> CommandOutput {
 
 // ========== 容器操作命令 ==========
 
-/// 启动容器
 #[tauri::command]
 async fn docker_container_start(container_id: String) -> CommandOutput {
     run_command("docker", &["start", &container_id])
 }
 
-/// 停止容器
 #[tauri::command]
 async fn docker_container_stop(container_id: String) -> CommandOutput {
     run_command("docker", &["stop", &container_id])
 }
 
-/// 重启容器
 #[tauri::command]
 async fn docker_container_restart(container_id: String) -> CommandOutput {
     run_command("docker", &["restart", &container_id])
 }
 
-/// 删除容器
 #[tauri::command]
 async fn docker_container_remove(container_id: String, force: Option<bool>) -> CommandOutput {
-    let mut args = vec!["rm"];
-    if force.unwrap_or(false) {
-        args.push("-f");
-    }
-    args.push(&container_id);
-    run_command("docker", &args)
+    let mut builder = ArgsBuilder::new(&["rm"]);
+    builder
+        .add_flag("-f", force.unwrap_or(false))
+        .add(&container_id);
+    run_with_builder("docker", &builder)
 }
 
-/// 获取容器日志
 #[tauri::command]
 fn docker_container_logs(container_id: String, tail: Option<u32>) -> CommandOutput {
-    let tail_str;
-    let mut args = vec!["logs"];
-    if let Some(n) = tail {
-        tail_str = n.to_string();
-        args.push("--tail");
-        args.push(&tail_str);
-    }
-    args.push(&container_id);
-    run_command("docker", &args)
+    let mut builder = ArgsBuilder::new(&["logs"]);
+    builder
+        .add_opt("--tail", tail)
+        .add(&container_id);
+    run_with_builder("docker", &builder)
 }
 
 // ========== 镜像操作命令 ==========
 
-/// 拉取镜像
 #[tauri::command]
 async fn docker_image_pull(image: String) -> CommandOutput {
     run_command("docker", &["pull", &image])
 }
 
-/// 删除镜像
 #[tauri::command]
 async fn docker_image_remove(image_id: String, force: Option<bool>) -> CommandOutput {
-    let mut args = vec!["rmi"];
-    if force.unwrap_or(false) {
-        args.push("-f");
-    }
-    args.push(&image_id);
-    run_command("docker", &args)
+    let mut builder = ArgsBuilder::new(&["rmi"]);
+    builder
+        .add_flag("-f", force.unwrap_or(false))
+        .add(&image_id);
+    run_with_builder("docker", &builder)
 }
 
 // ========== 数据卷操作命令 ==========
 
-/// 创建数据卷
 #[tauri::command]
 async fn docker_volume_create(name: String) -> CommandOutput {
     run_command("docker", &["volume", "create", &name])
 }
 
-/// 删除数据卷
 #[tauri::command]
 async fn docker_volume_remove(name: String, force: Option<bool>) -> CommandOutput {
-    let mut args = vec!["volume", "rm"];
-    if force.unwrap_or(false) {
-        args.push("-f");
-    }
-    args.push(&name);
-    run_command("docker", &args)
+    let mut builder = ArgsBuilder::new(&["volume", "rm"]);
+    builder
+        .add_flag("-f", force.unwrap_or(false))
+        .add(&name);
+    run_with_builder("docker", &builder)
 }
 
 // ========== 网络操作命令 ==========
 
-/// 创建网络
 #[tauri::command]
 async fn docker_network_create(name: String, driver: Option<String>) -> CommandOutput {
-    let mut args = vec!["network", "create"];
-    let driver_val;
-    if let Some(d) = driver {
-        driver_val = d;
-        args.push("--driver");
-        args.push(&driver_val);
-    }
-    args.push(&name);
-    run_command("docker", &args)
+    let mut builder = ArgsBuilder::new(&["network", "create"]);
+    builder
+        .add_opt("--driver", driver)
+        .add(&name);
+    run_with_builder("docker", &builder)
 }
 
-/// 删除网络
 #[tauri::command]
 async fn docker_network_remove(name: String) -> CommandOutput {
     run_command("docker", &["network", "rm", &name])

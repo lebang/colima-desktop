@@ -1,181 +1,173 @@
 <script setup>
-import { ref } from 'vue'
-import { Download, Search, Refresh, Delete, Box } from '@element-plus/icons-vue'
+import { ref, computed, onMounted } from 'vue'
+import { Download, Delete, Box } from '@element-plus/icons-vue'
+import { useDockerStore } from '@/stores/docker'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import { PageHeader, SearchBar, DataTable, FormDialog } from '@/components/common'
 
-// 模拟镜像数据
-const images = ref([
-  { id: 'sha256:abc123', name: 'nginx', tag: 'latest', size: '142 MB', created: '2周前' },
-  { id: 'sha256:def456', name: 'mysql', tag: '8.0', size: '516 MB', created: '1个月前' },
-  { id: 'sha256:ghi789', name: 'redis', tag: 'alpine', size: '32 MB', created: '3周前' },
-  { id: 'sha256:jkl012', name: 'node', tag: '18', size: '998 MB', created: '5天前' },
-  { id: 'sha256:mno345', name: 'postgres', tag: '15', size: '379 MB', created: '2周前' },
-])
+const dockerStore = useDockerStore()
 
 const searchQuery = ref('')
+const loading = ref(false)
 const pullDialogVisible = ref(false)
 const pullImageName = ref('')
+const pulling = ref(false)
 
-// 拉取镜像
+// 过滤后的镜像列表
+const filteredImages = computed(() => {
+  let result = dockerStore.images
+  
+  if (searchQuery.value) {
+    const query = searchQuery.value.toLowerCase()
+    result = result.filter(img => 
+      img.repository.toLowerCase().includes(query) || 
+      img.tag.toLowerCase().includes(query) ||
+      img.id.toLowerCase().includes(query)
+    )
+  }
+  
+  return result
+})
+
+// 刷新镜像列表
+const handleRefresh = async () => {
+  loading.value = true
+  try {
+    await dockerStore.fetchImages()
+  } finally {
+    loading.value = false
+  }
+}
+
+// 打开拉取对话框
 const handlePull = () => {
+  pullImageName.value = ''
   pullDialogVisible.value = true
 }
 
-const confirmPull = () => {
-  if (pullImageName.value) {
-    // 模拟拉取
-    const [name, tag = 'latest'] = pullImageName.value.split(':')
-    images.value.unshift({
-      id: 'sha256:new' + Date.now(),
-      name,
-      tag,
-      size: '-- MB',
-      created: '刚刚'
-    })
-    pullDialogVisible.value = false
-    pullImageName.value = ''
+// 确认拉取镜像
+const confirmPull = async () => {
+  if (!pullImageName.value.trim()) {
+    ElMessage.warning('请输入镜像名称')
+    return
+  }
+  
+  pulling.value = true
+  try {
+    const result = await dockerStore.pullImage(pullImageName.value.trim())
+    if (result.success) {
+      ElMessage.success(result.message)
+      pullDialogVisible.value = false
+      pullImageName.value = ''
+    } else {
+      ElMessage.error(result.message)
+    }
+  } finally {
+    pulling.value = false
   }
 }
 
 // 删除镜像
-const handleDelete = (row) => {
-  const index = images.value.findIndex(i => i.id === row.id)
-  if (index > -1) {
-    images.value.splice(index, 1)
+const handleDelete = async (row) => {
+  const imageName = row.repository === '<none>' ? row.id.substring(7, 19) : `${row.repository}:${row.tag}`
+  
+  try {
+    await ElMessageBox.confirm(`确定要删除镜像 "${imageName}" 吗？`, '确认删除', {
+      confirmButtonText: '删除',
+      cancelButtonText: '取消',
+      type: 'warning',
+    })
+    
+    loading.value = true
+    const result = await dockerStore.removeImage(row.id)
+    ElMessage[result.success ? 'success' : 'error'](result.message)
+  } catch {
+    // 用户取消
+  } finally {
+    loading.value = false
   }
 }
 
-// 创建容器
-const handleCreateContainer = (row) => {
-  console.log('创建容器:', row)
+// 创建容器（待实现）
+const handleCreateContainer = () => {
+  ElMessage.info('创建容器功能开发中...')
 }
+
+onMounted(() => handleRefresh())
 </script>
 
 <template>
-  <div class="images-page">
-    <div class="page-header">
-      <h2>镜像管理</h2>
+  <div class="page-container">
+    <PageHeader title="镜像管理">
       <el-button type="primary" :icon="Download" @click="handlePull">拉取镜像</el-button>
-    </div>
+    </PageHeader>
 
-    <!-- 搜索 -->
-    <el-card shadow="never" class="filter-card">
-      <el-row :gutter="20">
-        <el-col :span="8">
-          <el-input 
-            v-model="searchQuery" 
-            placeholder="搜索镜像名称..." 
-            :prefix-icon="Search"
-            clearable
-          />
-        </el-col>
-        <el-col :span="16" style="text-align: right">
-          <el-button :icon="Refresh">刷新</el-button>
-          <el-button type="danger" :icon="Delete">清理未使用镜像</el-button>
-        </el-col>
-      </el-row>
-    </el-card>
+    <SearchBar 
+      v-model="searchQuery" 
+      placeholder="搜索镜像名称..." 
+      :loading="loading"
+      @refresh="handleRefresh"
+    />
 
-    <!-- 镜像列表 -->
-    <el-card shadow="never" class="table-card">
-      <el-table :data="images" stripe style="width: 100%">
-        <el-table-column prop="id" label="镜像 ID" width="180">
-          <template #default="{ row }">
-            <el-tooltip :content="row.id" placement="top">
-              <span class="image-id">{{ row.id.substring(7, 19) }}</span>
-            </el-tooltip>
-          </template>
-        </el-table-column>
-        <el-table-column prop="name" label="名称" min-width="150">
-          <template #default="{ row }">
-            <span class="image-name">{{ row.name }}</span>
-          </template>
-        </el-table-column>
-        <el-table-column prop="tag" label="标签" width="120">
-          <template #default="{ row }">
-            <el-tag size="small">{{ row.tag }}</el-tag>
-          </template>
-        </el-table-column>
-        <el-table-column prop="size" label="大小" width="120" />
-        <el-table-column prop="created" label="创建时间" width="120" />
-        <el-table-column label="操作" width="200" fixed="right">
-          <template #default="{ row }">
-            <el-button 
-              type="primary" 
-              size="small" 
-              :icon="Box"
-              @click="handleCreateContainer(row)"
-            >
-              创建容器
-            </el-button>
-            <el-button 
-              type="danger" 
-              size="small" 
-              :icon="Delete"
-              @click="handleDelete(row)"
-            >
-              删除
-            </el-button>
-          </template>
-        </el-table-column>
-      </el-table>
-    </el-card>
+    <DataTable :data="filteredImages" :loading="loading" empty-text="暂无镜像">
+      <el-table-column prop="id" label="镜像 ID" width="180">
+        <template #default="{ row }">
+          <el-tooltip :content="row.id" placement="top">
+            <span class="cell-id">{{ row.id.substring(7, 19) }}</span>
+          </el-tooltip>
+        </template>
+      </el-table-column>
+      <el-table-column prop="repository" label="名称" min-width="200">
+        <template #default="{ row }">
+          <span class="cell-name">{{ row.repository }}</span>
+        </template>
+      </el-table-column>
+      <el-table-column prop="tag" label="标签" width="120">
+        <template #default="{ row }">
+          <el-tag size="small" v-if="row.tag !== '<none>'">{{ row.tag }}</el-tag>
+          <span v-else class="cell-secondary">{{ row.tag }}</span>
+        </template>
+      </el-table-column>
+      <el-table-column prop="size" label="大小" width="120" />
+      <el-table-column prop="created" label="创建时间" width="180">
+        <template #default="{ row }">
+          <span class="cell-secondary">{{ row.created }}</span>
+        </template>
+      </el-table-column>
+      <el-table-column label="操作" width="200" fixed="right">
+        <template #default="{ row }">
+          <el-button type="primary" size="small" :icon="Box" @click="handleCreateContainer(row)">
+            创建容器
+          </el-button>
+          <el-button type="danger" size="small" :icon="Delete" @click="handleDelete(row)">
+            删除
+          </el-button>
+        </template>
+      </el-table-column>
+    </DataTable>
 
     <!-- 拉取镜像对话框 -->
-    <el-dialog v-model="pullDialogVisible" title="拉取镜像" width="500px">
-      <el-form label-width="80px">
-        <el-form-item label="镜像名称">
-          <el-input 
-            v-model="pullImageName" 
-            placeholder="例如: nginx:latest"
-          />
-        </el-form-item>
-        <el-alert 
-          title="提示：可以输入完整的镜像地址，如 docker.io/library/nginx:latest" 
-          type="info" 
-          :closable="false"
-          show-icon
+    <FormDialog
+      v-model="pullDialogVisible"
+      title="拉取镜像"
+      confirm-text="拉取"
+      :loading="pulling"
+      tip="提示：可以输入完整的镜像地址，如 docker.io/library/nginx:latest"
+      @confirm="confirmPull"
+    >
+      <el-form-item label="镜像名称">
+        <el-input 
+          v-model="pullImageName" 
+          placeholder="例如: nginx:latest"
+          @keyup.enter="confirmPull"
         />
-      </el-form>
-      <template #footer>
-        <el-button @click="pullDialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="confirmPull">拉取</el-button>
-      </template>
-    </el-dialog>
+      </el-form-item>
+    </FormDialog>
   </div>
 </template>
 
 <style scoped lang="less">
-.images-page {
+.page-container {
   padding: 20px;
-}
-
-.page-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20px;
-  
-  h2 {
-    margin: 0;
-    font-size: 20px;
-    font-weight: 600;
-  }
-}
-
-.filter-card {
-  margin-bottom: 20px;
-}
-
-.table-card {
-  .image-id {
-    font-family: 'Monaco', 'Menlo', monospace;
-    font-size: 12px;
-    color: #909399;
-  }
-  
-  .image-name {
-    font-weight: 500;
-    color: #303133;
-  }
 }
 </style>

@@ -204,6 +204,49 @@ await i18nScope.change('en-US')
 await i18nScope.change('zh-CN')
 ```
 
+### 响应式语言切换（无刷新）
+
+本项目实现了**即时响应式**的语言切换，无需刷新页面。原理如下：
+
+```javascript
+// App.vue 中的实现
+import { ref, onMounted, onUnmounted } from 'vue'
+import { t, i18nScope } from '@/languages'
+
+// 语言变化触发器
+const langTrigger = ref(0)
+
+onMounted(() => {
+  // 监听语言变化事件
+  i18nScope.on('change', () => {
+    langTrigger.value++
+  })
+})
+
+// 响应式翻译函数
+const $t = (text) => {
+  langTrigger.value // 触发响应式依赖
+  return t(text)
+}
+```
+
+**关键点：**
+
+1. 使用 `langTrigger` ref 作为响应式触发器
+2. 监听 `i18nScope.on('change')` 事件
+3. 创建 `$t()` 函数，内部依赖 `langTrigger` 实现响应式
+4. 子组件通过 `:key="langTrigger"` 强制重新渲染
+
+```vue
+<template>
+  <!-- 使用响应式 $t 函数 -->
+  <span>{{ $t('仪表盘') }}</span>
+  
+  <!-- 子组件通过 key 强制重新渲染 -->
+  <component :is="currentComponent" :key="langTrigger" />
+</template>
+```
+
 ### 添加新翻译
 
 1. 在 `src/languages/messages/zh-CN.js` 中添加中文文本

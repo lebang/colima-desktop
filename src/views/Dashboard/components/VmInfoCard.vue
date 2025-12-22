@@ -119,6 +119,7 @@ const handleRestart = () => emit('restart')
   justify-content: space-between;
   font-weight: 600;
   font-size: 14px;
+  min-height: 24px;
   
   > span {
     display: flex;

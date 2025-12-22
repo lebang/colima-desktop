@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import { i18nScope, change } from '@/languages'
 
 // 当前语言（响应式）
@@ -28,13 +28,11 @@ const changeLanguage = async (lang) => {
   
   try {
     await change(lang)
-    // 刷新页面以应用新语言
-    window.location.reload()
+    // 语言包已预加载，无需刷新页面，i18nScope.on('change') 会自动触发更新
   } catch (error) {
     console.error('Failed to change language:', error)
   }
 }
-
 // 获取当前语言的短标签
 const getCurrentLabel = () => {
   const lang = languages.find(l => l.code === currentLang.value)
