@@ -17,7 +17,7 @@ const handleAction = (action) => {
 </script>
 
 <template>
-  <el-card shadow="hover" class="quick-actions-card">
+  <el-card class="quick-actions-card">
     <template #header>
       <div class="card-header">
         <span><el-icon><Promotion /></el-icon> {{ t('快捷操作') }}</span>

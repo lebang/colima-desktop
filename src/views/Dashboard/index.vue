@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, onUnmounted, ref, computed } from 'vue'
+import { onMounted, onUnmounted, ref, computed, nextTick } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { useColimaStore, useDockerStore } from '@/stores'
 import { t } from '@/languages'
@@ -16,7 +16,6 @@ const dockerStore = useDockerStore()
 // 刷新定时器
 let refreshTimer = null
 const isRefreshing = ref(false)
-const isPageVisible = ref(true)
 
 // 资源监控数据（从 docker store 获取）
 const systemStats = computed(() => ({
@@ -157,48 +156,52 @@ const handleQuickAction = (action) => {
 // 启动定时刷新
 const startAutoRefresh = () => {
   stopAutoRefresh() // 先清理已有定时器
-  // 每 10 秒刷新一次
-  refreshTimer = setInterval(async () => {
-    // 仅在页面可见且未在加载中时刷新
-    if (isPageVisible.value && !colimaStore.isLoading) {
-      await colimaStore.fetchStatus()
-      if (colimaStore.isRunning) {
-        await dockerStore.fetchAll()
+  
+  // 递归函数：每次请求完成后再设置下一次定时器
+  const scheduleNextRefresh = () => {
+    refreshTimer = setTimeout(async () => {
+      // 仅在页面可见且未在加载中时刷新
+      if (!colimaStore.isLoading) {
+        await colimaStore.fetchStatus().finally(() => {
+          if (colimaStore.isRunning) {
+            dockerStore.fetchAll()
+          }
+        })
       }
-    }
-  }, 10000)
+      
+      // 请求完成后，再次调度下一次刷新
+      scheduleNextRefresh()
+    }, 10000)
+  }
+
+  setTimeout(() => {
+    colimaStore.fetchStatus().finally(() => {
+      if (colimaStore.isRunning) {
+        dockerStore.fetchAll()
+      }
+    })
+    // 启动第一次调度
+    scheduleNextRefresh()
+  }, 500)
 }
 
 // 停止定时刷新
 const stopAutoRefresh = () => {
   if (refreshTimer) {
-    clearInterval(refreshTimer)
+    clearTimeout(refreshTimer)
     refreshTimer = null
   }
 }
 
-// 处理页面可见性变化
-const handleVisibilityChange = () => {
-  isPageVisible.value = !document.hidden
-  if (isPageVisible.value) {
-    // 页面变为可见时，立即刷新一次数据
-    colimaStore.fetchStatus()
-  }
-}
 
 // 组件挂载时获取数据
-onMounted(async () => {
-  // 监听页面可见性变化
-  document.addEventListener('visibilitychange', handleVisibilityChange)
-  
-  await colimaStore.refreshAll()
+onMounted(() => {
   startAutoRefresh()
 })
 
 // 组件卸载时清理定时器和事件监听
 onUnmounted(() => {
   stopAutoRefresh()
-  document.removeEventListener('visibilitychange', handleVisibilityChange)
 })
 </script>
 

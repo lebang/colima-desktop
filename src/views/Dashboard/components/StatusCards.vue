@@ -56,7 +56,7 @@ const getStatusType = () => {
 
 <template>
   <div class="status-cards">
-    <el-card shadow="hover" class="status-card">
+    <el-card class="status-card">
       <div class="status-card-content">
         <div class="status-icon colima">
           <el-icon :size="28"><Monitor /></el-icon>
@@ -75,7 +75,7 @@ const getStatusType = () => {
       </div>
     </el-card>
     
-    <el-card shadow="hover" class="status-card">
+    <el-card class="status-card">
       <div class="status-card-content">
         <div class="status-icon containers">
           <el-icon :size="28"><Box /></el-icon>
@@ -92,7 +92,7 @@ const getStatusType = () => {
       </div>
     </el-card>
     
-    <el-card shadow="hover" class="status-card">
+    <el-card class="status-card">
       <div class="status-card-content">
         <div class="status-icon images">
           <el-icon :size="28"><Files /></el-icon>
@@ -104,7 +104,7 @@ const getStatusType = () => {
       </div>
     </el-card>
     
-    <el-card shadow="hover" class="status-card">
+    <el-card class="status-card">
       <div class="status-card-content">
         <div class="status-icon volumes">
           <el-icon :size="28"><Coin /></el-icon>

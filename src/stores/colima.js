@@ -57,12 +57,13 @@ export const useColimaStore = defineStore('colima', () => {
   async function refreshAll() {
     loading.value = true
     try {
-      await fetchStatus()
-      // 如果 Colima 运行中，同时刷新 Docker 资源
-      if (vmStatus.value === 'running') {
-        const dockerStore = useDockerStore()
-        await dockerStore.fetchAll()
-      }
+      fetchStatus().finally(() => {
+        // 如果 Colima 运行中，同时刷新 Docker 资源
+        if (vmStatus.value === 'running') {
+          const dockerStore = useDockerStore()
+          dockerStore.fetchAll()
+        }
+      })
     } finally {
       loading.value = false
     }
@@ -86,10 +87,10 @@ export const useColimaStore = defineStore('colima', () => {
       const result = await colimaApi.start(options)
       if (result.success) {
         vmStatus.value = 'running'
-        await fetchStatus()
-        // 启动后获取 Docker 资源
-        const dockerStore = useDockerStore()
-        await dockerStore.fetchAll()
+        fetchStatus().then(() => {
+          const dockerStore = useDockerStore()
+          dockerStore.fetchAll()
+        })
       } else {
         vmStatus.value = 'stopped'
         lastError.value = result.message
@@ -159,9 +160,10 @@ export const useColimaStore = defineStore('colima', () => {
       const startResult = await colimaApi.start()
       if (startResult.success) {
         vmStatus.value = 'running'
-        await fetchStatus()
-        const dockerStore = useDockerStore()
-        await dockerStore.fetchAll()
+        fetchStatus().finally(() => {
+          const dockerStore = useDockerStore()
+          dockerStore.fetchAll()
+        })
         return { success: true, message: 'Colima 重启成功' }
       } else {
         vmStatus.value = 'stopped'

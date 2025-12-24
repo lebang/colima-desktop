@@ -30,7 +30,7 @@ const getProgressColor = (percentage) => {
 </script>
 
 <template>
-  <el-card shadow="hover" class="resource-card">
+  <el-card class="resource-card">
     <template #header>
       <div class="card-header">
         <span><el-icon><DataAnalysis /></el-icon> {{ t('资源监控') }}</span>

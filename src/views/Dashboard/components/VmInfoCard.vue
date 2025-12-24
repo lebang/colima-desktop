@@ -34,7 +34,7 @@ const handleRestart = () => emit('restart')
 </script>
 
 <template>
-  <el-card shadow="hover" class="vm-info-card">
+  <el-card class="vm-info-card">
     <template #header>
       <div class="card-header">
         <span><el-icon><Setting /></el-icon> {{ t('虚拟机信息') }}</span>
