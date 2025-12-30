@@ -4,6 +4,8 @@ import { fileURLToPath, URL } from "node:url";
 import AutoImport from "unplugin-auto-import/vite";
 import Components from "unplugin-vue-components/vite";
 import { ElementPlusResolver } from "unplugin-vue-components/resolvers";
+import Icons from 'unplugin-icons/vite'
+import IconsResolver from 'unplugin-icons/resolver'
 
 const host = process.env.TAURI_DEV_HOST;
 
@@ -12,13 +14,20 @@ export default defineConfig({
   plugins: [
     vue(),
     AutoImport({
-      resolvers: [ElementPlusResolver()],
-      imports: ['vue'],
-      dts: false, // 不生成类型声明文件
+      imports: ['vue', 'pinia'],
+      resolvers: [
+        ElementPlusResolver(), 
+        IconsResolver()
+      ],
     }),
     Components({
-      resolvers: [ElementPlusResolver()],
-      dts: false, // 不生成类型声明文件
+      resolvers: [
+        ElementPlusResolver(), 
+        IconsResolver()
+      ],
+    }),
+    Icons({
+      autoInstall: true,
     }),
   ],
   resolve: {

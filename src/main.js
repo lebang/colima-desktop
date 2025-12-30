@@ -1,7 +1,7 @@
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
 // Element Plus 样式 - 只导入基础样式，组件样式由 unplugin-vue-components 按需导入
-import 'element-plus/dist/index.css'
+// import 'element-plus/dist/index.css'
 import App from './App.vue'
 import './styles.less'
 
