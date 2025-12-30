@@ -1,6 +1,6 @@
 <script setup>
 import { onMounted, onUnmounted, ref, computed, nextTick } from 'vue'
-import { ElMessage, ElMessageBox } from 'element-plus'
+import { ElMessage, ElMessageBox, ElLoading } from 'element-plus'
 import { useColimaStore, useDockerStore } from '@/stores'
 import { t } from '@/languages'
 
@@ -103,86 +103,30 @@ const handleRestart = async () => {
   }
 }
 
-// 快捷操作处理
-const handleQuickAction = (action) => {
-  if (!colimaStore.isRunning) {
-    ElMessage.warning(t('请先启动 Colima'))
-    return
-  }
+// 数据刷新逻辑
+const refreshData = async () => {
+  // 仅在未加载中时刷新
+  if (colimaStore.isLoading) return
   
-  switch (action) {
-    case 'createContainer':
-      ElMessage.info(t('创建容器功能开发中...'))
-      break
-    case 'pullImage':
-      ElMessageBox.prompt(t('请输入镜像名称'), t('拉取镜像'), {
-        confirmButtonText: t('确定'),
-        cancelButtonText: t('取消'),
-        inputPlaceholder: t('例如: nginx:latest')
-      }).then(({ value }) => {
-        if (value) {
-          ElMessage.info(t('正在拉取镜像: {}', value))
-          // TODO: 实现镜像拉取
-        }
-      }).catch(() => {})
-      break
-    case 'createVolume':
-      ElMessageBox.prompt(t('请输入数据卷名称'), t('创建数据卷'), {
-        confirmButtonText: t('确定'),
-        cancelButtonText: t('取消'),
-        inputPlaceholder: t('例如: my-volume')
-      }).then(({ value }) => {
-        if (value) {
-          ElMessage.info(t('正在创建数据卷: {}', value))
-          // TODO: 实现数据卷创建
-        }
-      }).catch(() => {})
-      break
-    case 'createNetwork':
-      ElMessageBox.prompt(t('请输入网络名称'), t('创建网络'), {
-        confirmButtonText: t('确定'),
-        cancelButtonText: t('取消'),
-        inputPlaceholder: t('例如: my-network')
-      }).then(({ value }) => {
-        if (value) {
-          ElMessage.info(t('正在创建网络: {}', value))
-          // TODO: 实现网络创建
-        }
-      }).catch(() => {})
-      break
+  await colimaStore.fetchStatus()
+  if (colimaStore.isRunning) {
+    await dockerStore.fetchAll()
   }
 }
 
-// 启动定时刷新
+// 启动定时刷新（递归调度）
 const startAutoRefresh = () => {
   stopAutoRefresh() // 先清理已有定时器
   
-  // 递归函数：每次请求完成后再设置下一次定时器
   const scheduleNextRefresh = () => {
     refreshTimer = setTimeout(async () => {
-      // 仅在页面可见且未在加载中时刷新
-      if (!colimaStore.isLoading) {
-        await colimaStore.fetchStatus().finally(() => {
-          if (colimaStore.isRunning) {
-            dockerStore.fetchAll()
-          }
-        })
-      }
-      
-      // 请求完成后，再次调度下一次刷新
-      scheduleNextRefresh()
+      await refreshData()
+      scheduleNextRefresh() // 完成后调度下一次
     }, 10000)
   }
-
-  setTimeout(() => {
-    colimaStore.fetchStatus().finally(() => {
-      if (colimaStore.isRunning) {
-        dockerStore.fetchAll()
-      }
-    })
-    // 启动第一次调度
-    scheduleNextRefresh()
-  }, 500)
+  
+  // 启动调度
+  scheduleNextRefresh()
 }
 
 // 停止定时刷新
@@ -193,10 +137,25 @@ const stopAutoRefresh = () => {
   }
 }
 
+// 初始化数据（首次加载）
+const initData = async () => {
+  const loadData = async () => {
+    await refreshData()
+    startAutoRefresh()
+  }
+  
+  if (window.requestIdleCallback) {
+    // 使用 requestIdleCallback 在浏览器空闲时执行，最多等待 1 秒
+    requestIdleCallback(loadData, { timeout: 1000 })
+  } else {
+    // 降级方案：Safari 等不支持的浏览器
+    setTimeout(loadData, 0)
+  }
+}
 
 // 组件挂载时获取数据
 onMounted(() => {
-  startAutoRefresh()
+  initData()
 })
 
 // 组件卸载时清理定时器和事件监听
@@ -206,7 +165,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="dashboard">
+  <div class="dashboard" v-loading.fullscreen.lock="colimaStore.isLoading">
     <!-- 顶部状态卡片 -->
     <StatusCards
       :is-running="colimaStore.isRunning"
@@ -241,10 +200,7 @@ onUnmounted(() => {
     </div>
 
     <!-- 快捷操作 -->
-    <QuickActions
-      :is-running="colimaStore.isRunning"
-      @action="handleQuickAction"
-    />
+    <QuickActions :is-running="colimaStore.isRunning" />
 
     <!-- 错误提示 -->
     <el-alert 

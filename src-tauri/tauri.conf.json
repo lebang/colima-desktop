@@ -1,6 +1,6 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-"productName": "colima-desktop",
+  "productName": "colima-desktop",
   "version": "0.1.0",
   "identifier": "com.colima.desktop",
   "build": {
@@ -13,9 +13,10 @@
     "withGlobalTauri": true,
     "windows": [
       {
-"title": "Colima Desktop",
+        "title": "Colima Desktop",
         "width": 960,
-        "height": 680
+        "height": 680,
+        "titleBarStyle": "Transparent"
       }
     ],
     "security": {

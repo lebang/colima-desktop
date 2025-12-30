@@ -16,13 +16,13 @@ export default defineConfig({
     AutoImport({
       imports: ['vue', 'pinia'],
       resolvers: [
-        ElementPlusResolver(), 
+        ElementPlusResolver({ imports: 'sass' }), 
         IconsResolver()
       ],
     }),
     Components({
       resolvers: [
-        ElementPlusResolver(), 
+        ElementPlusResolver({ imports: 'sass' }), 
         IconsResolver()
       ],
     }),

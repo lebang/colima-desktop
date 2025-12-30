@@ -1,5 +1,7 @@
 <script setup>
 import { Promotion, Plus, Download, FolderAdd, Connection } from '@element-plus/icons-vue'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import { useColimaStore } from '@/stores'
 import { t } from '@/languages'
 
 const props = defineProps({
@@ -9,10 +11,56 @@ const props = defineProps({
   }
 })
 
-const emit = defineEmits(['action'])
+const colimaStore = useColimaStore()
 
+// 快捷操作处理
 const handleAction = (action) => {
-  emit('action', action)
+  if (!colimaStore.isRunning) {
+    ElMessage.warning(t('请先启动 Colima'))
+    return
+  }
+  
+  switch (action) {
+    case 'createContainer':
+      ElMessage.info(t('创建容器功能开发中...'))
+      break
+    case 'pullImage':
+      ElMessageBox.prompt(t('请输入镜像名称'), t('拉取镜像'), {
+        confirmButtonText: t('确定'),
+        cancelButtonText: t('取消'),
+        inputPlaceholder: t('例如: nginx:latest')
+      }).then(({ value }) => {
+        if (value) {
+          ElMessage.info(t('正在拉取镜像: {}', value))
+          // TODO: 实现镜像拉取
+        }
+      }).catch(() => {})
+      break
+    case 'createVolume':
+      ElMessageBox.prompt(t('请输入数据卷名称'), t('创建数据卷'), {
+        confirmButtonText: t('确定'),
+        cancelButtonText: t('取消'),
+        inputPlaceholder: t('例如: my-volume')
+      }).then(({ value }) => {
+        if (value) {
+          ElMessage.info(t('正在创建数据卷: {}', value))
+          // TODO: 实现数据卷创建
+        }
+      }).catch(() => {})
+      break
+    case 'createNetwork':
+      ElMessageBox.prompt(t('请输入网络名称'), t('创建网络'), {
+        confirmButtonText: t('确定'),
+        cancelButtonText: t('取消'),
+        inputPlaceholder: t('例如: my-network')
+      }).then(({ value }) => {
+        if (value) {
+          ElMessage.info(t('正在创建网络: {}', value))
+          // TODO: 实现网络创建
+        }
+      }).catch(() => {})
+      break
+  }
 }
 </script>
 
